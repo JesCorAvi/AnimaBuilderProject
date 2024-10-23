@@ -1,101 +1,350 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import { useState, useRef } from 'react'
+import { Button } from "../components/ui/button"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { ScrollArea } from "../components/ui/scroll-area"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../components/ui/accordion"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog"
+import { ChevronDown, ChevronRight } from 'lucide-react'
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+const skillCategories = {
+  "Atléticas": ["Acrobacias", "Atletismo", "Montar", "Nadar", "Saltar", "Trepar"],
+  "Sociales": ["Estilo", "Intimidar", "Liderazgo", "Persuasión"],
+  "Subterfugio": ["Cerrajería", "Disfraz", "Ocultarse", "Robo", "Sigilo", "Trampería", "Venenos"],
+  "Perceptivas": ["Advertir", "Buscar", "Rastrear"],
+  "Intelectuales": ["Animales", "Ciencia", "Herbolaria", "Historia", "Medicina", "Memorizar", "Navegación", "Ocultismo", "Tasación", "Valoración mágica"],
+  "Vigor": ["Frialdad", "Proezas de fuerza", "Resistir el dolor"],
+  "Creativas": ["Arte", "Baile", "Forja", "Música", "Trucos de manos", "Runas", "Alquimia", "Animismo", "Caligrafía Ritual", "Orfebreria", "Confección", "Conf. marionetas"]
+}
+
+export default function AnimaCharacterSheet() {
+  const initialSkills = Object.values(skillCategories).flat().reduce((acc, skill) => {
+    acc[skill] = 0;
+    return acc;
+  }, {});
+
+  const [character, setCharacter] = useState({
+    name: 'Nuevo Personaje',
+    attributes: {
+      AGI: 5, CON: 5, DES: 5, FUE: 5, INT: 5, PER: 5, POD: 5, VOL: 5
+    },
+    advantages: [],
+    disadvantages: [],
+    skills: initialSkills,
+    originalSkills: {},
+    techniques: []
+  })
+
+  const [activeSection, setActiveSection] = useState('attributes')
+  const [newSkillName, setNewSkillName] = useState('')
+  const [isAddingSkill, setIsAddingSkill] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const updateAttribute = (attr, value) => {
+    setCharacter(prev => ({
+      ...prev,
+      attributes: {
+        ...prev.attributes,
+        [attr]: Math.max(1, Math.min(10, parseInt(value) || 0))
+      }
+    }))
+  }
+
+  const updateSkill = (skill, value, isOriginal = false) => {
+    setCharacter(prev => ({
+      ...prev,
+      [isOriginal ? 'originalSkills' : 'skills']: {
+        ...prev[isOriginal ? 'originalSkills' : 'skills'],
+        [skill]: Math.max(0, parseInt(value) || 0)
+      }
+    }))
+  }
+
+  const addNewSkill = () => {
+    if (newSkillName && !character.skills.hasOwnProperty(newSkillName) && !character.originalSkills.hasOwnProperty(newSkillName)) {
+      setCharacter(prev => ({
+        ...prev,
+        originalSkills: {
+          ...prev.originalSkills,
+          [newSkillName]: 0
+        }
+      }))
+      setNewSkillName('')
+      setIsAddingSkill(false)
+    }
+  }
+
+  const downloadCharacter = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(character, null, 2))
+    const downloadAnchorNode = document.createElement('a')
+    downloadAnchorNode.setAttribute("href", dataStr)
+    downloadAnchorNode.setAttribute("download", character.name + ".json")
+    document.body.appendChild(downloadAnchorNode)
+    downloadAnchorNode.click()
+    downloadAnchorNode.remove()
+  }
+
+  const uploadCharacter = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const json = JSON.parse(e.target.result)
+          setCharacter(json)
+        } catch (error) {
+          console.error("Error parsing JSON file:", error)
+          alert("Error al cargar el archivo. Asegúrate de que es un JSON válido.")
+        }
+      }
+      reader.readAsText(file)
+    }
+  }
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'attributes':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Atributos</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+  {Object.entries(character.attributes).map(([attr, value]) => (
+    <div key={attr} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <Label htmlFor={attr}>{attr}</Label>
+      <Input
+        id={attr}
+        type="number"
+        value={value}
+        onChange={(e) => updateAttribute(attr, e.target.value)}
+        min="1"
+        max="10"
+        className="w-16 text-center"
+      />
     </div>
-  );
+  ))}
+</CardContent>
+          </Card>
+        )
+      case 'skills':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center">
+                Habilidades
+                <Dialog open={isAddingSkill} onOpenChange={setIsAddingSkill}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">Añadir Habilidad</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Añadir Nueva Habilidad</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        value={newSkillName}
+                        onChange={(e) => setNewSkillName(e.target.value)}
+                        placeholder="Nombre de la habilidad"
+                      />
+                      <Button onClick={addNewSkill}>Añadir</Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[500px]">
+                {Object.entries(skillCategories).map(([category, skills]) => (
+                  <Accordion type="single" collapsible key={category}>
+                    <AccordionItem value={category}>
+                      <AccordionTrigger>{category}</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {skills.map(skill => (
+                            <div key={skill} className="flex flex-col items-center">
+                              <Label htmlFor={skill}>{skill}</Label>
+                              <Input
+                                id={skill}
+                                type="number"
+                                value={character.skills[skill]}
+                                onChange={(e) => updateSkill(skill, e.target.value)}
+                                min="0"
+                                className="w-16 text-center"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                ))}
+                {Object.keys(character.originalSkills).length > 0 && (
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="originales">
+                      <AccordionTrigger>Originales</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {Object.entries(character.originalSkills).map(([skill, value]) => (
+                            <div key={skill} className="flex flex-col items-center">
+                              <Label htmlFor={skill}>{skill}</Label>
+                              <Input
+                                id={skill}
+                                type="number"
+                                value={value}
+                                onChange={(e) => updateSkill(skill, e.target.value, true)}
+                                min="0"
+                                className="w-16 text-center"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        )
+      case 'advantages':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Ventajas y Desventajas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Aquí puedes añadir la lógica para gestionar ventajas y desventajas</p>
+            </CardContent>
+          </Card>
+        )
+      case 'techniques':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Técnicas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Aquí puedes añadir la lógica para gestionar técnicas</p>
+            </CardContent>
+          </Card>
+        )
+      default:
+        return null
+    }
+  }
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4">ANIMA: Beyond Fantasy - Hoja de Personaje</h1>
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="w-full md:w-1/3">
+          <Input
+            value={character.name}
+            onChange={(e) => setCharacter(prev => ({ ...prev, name: e.target.value }))}
+            className="mb-4 text-2xl font-bold"
+          />
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="attributes">
+              <AccordionTrigger onClick={() => setActiveSection('attributes')}>Atributos</AccordionTrigger>
+              <AccordionContent>
+                <ul>
+                  {Object.keys(character.attributes).map(attr => (
+                    <li key={attr} className="cursor-pointer hover:bg-gray-100 p-1" onClick={() => setActiveSection('attributes')}>
+                      {attr}: {character.attributes[attr]}
+                    </li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="skills">
+              <AccordionTrigger onClick={() => setActiveSection('skills')}>Habilidades</AccordionTrigger>
+              <AccordionContent>
+                <Accordion type="multiple" className="w-full">
+                  {Object.entries(skillCategories).map(([category, skills]) => (
+                    <AccordionItem value={category} key={category}>
+                      <AccordionTrigger className="text-sm">{category}</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-3 gap-1">
+                          {skills.map(skill => (
+                            <div key={skill} className="text-xs p-1 hover:bg-gray-100">
+                              {skill}: {character.skills[skill]}
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                  {Object.keys(character.originalSkills).length > 0 && (
+                    <AccordionItem value="originales">
+                      <AccordionTrigger className="text-sm">Originales</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-3 gap-1">
+                          {Object.entries(character.originalSkills).map(([skill, value]) => (
+                            <div key={skill} className="text-xs p-1 hover:bg-gray-100">
+                              {skill}: {value}
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                </Accordion>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="advantages">
+              <AccordionTrigger onClick={() => setActiveSection('advantages')}>Ventajas/Desventajas</AccordionTrigger>
+              <AccordionContent>
+                <p className="cursor-pointer hover:bg-gray-100 p-1" onClick={() => setActiveSection('advantages')}>
+                  Gestionar ventajas y desventajas
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="techniques">
+              <AccordionTrigger onClick={() => setActiveSection('techniques')}>Técnicas</AccordionTrigger>
+              <AccordionContent>
+                <p className="cursor-pointer hover:bg-gray-100 p-1" onClick={() => setActiveSection('techniques')}>
+                  Gestionar técnicas
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+        <div className="w-full md:w-2/3">
+          {renderContent()}
+        </div>
+      </div>
+      
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle>Resumen del Personaje</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+            <pre>{JSON.stringify(character, null, 2)}</pre>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+      
+      <div className="mt-4 flex gap-4">
+        <Button  onClick={downloadCharacter}>Descargar Personaje</Button>
+        <Button onClick={() => fileInputRef.current.click()}>Cargar Personaje</Button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={uploadCharacter}
+          accept=".json"
+          style={{ display: 'none' }}
+        />
+      </div>
+    </div>
+  )
 }
